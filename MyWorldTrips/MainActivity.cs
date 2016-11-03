@@ -6,6 +6,8 @@ using System;
 using Android.Gms.Maps.Model;
 using Android.Locations;
 using Android.Runtime;
+using Android.Content;
+using Android.Util;
 
 namespace MyWorldTrips
 {
@@ -17,23 +19,20 @@ namespace MyWorldTrips
         private Spinner spinner;
         private string provider;
 
+        //Users global location variable
+        private MarkerOptions m_MarkerOptions;
+
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
-            // Set our view from the "main" layout resource
             SetContentView (Resource.Layout.Main);
 
             spinner = FindViewById<Spinner>(Resource.Id.spinner);
 
             //Maybe move these somwhere else if they dont belong to map setup
             spinner.ItemSelected += Spinner_ItemSelected;
-            locationManager = (LocationManager)this.GetSystemService(LocationService);
+            locationManager = GetSystemService(Context.LocationService) as LocationManager;
             provider = locationManager.GetBestProvider(new Criteria(), false);
-            Location location = locationManager.GetLastKnownLocation(provider);
-            if (location == null)
-            {
-                System.Diagnostics.Debug.WriteLine("No location");
-            }
 
             SetUpMap();
         }
@@ -73,38 +72,54 @@ namespace MyWorldTrips
         {
             m_Map = googleMap;
 
-            //MarkerOptions mOptions = new MarkerOptions();
-            //mOptions.SetPosition(new LatLng(65.0121, 25.4651));
-            //mOptions.SetTitle("Oulu");
-            //m_Map.AddMarker(mOptions);
+            Location location = locationManager.GetLastKnownLocation(provider);
+            if (location == null)
+                System.Diagnostics.Debug.WriteLine("No location");
+            else
+            {
+                m_MarkerOptions = UpdateMarker(location.Latitude, location.Longitude);
+                m_Map.AddMarker(m_MarkerOptions);
+            }
 
             m_Map.UiSettings.ZoomControlsEnabled = true;
             m_Map.UiSettings.CompassEnabled = true;
+            m_Map.UiSettings.MyLocationButtonEnabled = true;
+            m_Map.UiSettings.MapToolbarEnabled = true;
             m_Map.MoveCamera(CameraUpdateFactory.ZoomIn());
         }
 
-        public void OnLocationChanged(Location location)
+        //Default user position. to be continued
+        public MarkerOptions UpdateMarker (double lati, double longi)
         {
-            Double lat, lng;
-            lat = location.Latitude;
-            lng = location.Longitude;
+            m_MarkerOptions = new MarkerOptions();
+            m_MarkerOptions.SetPosition(new LatLng(lati, longi));
+            m_MarkerOptions.SetTitle("My Position");
+            m_MarkerOptions.SetIcon(BitmapDescriptorFactory.DefaultMarker(BitmapDescriptorFactory.HueCyan));
 
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.SetPosition(new LatLng(lat, lng));
-            markerOptions.SetTitle("My Position");
-            m_Map.AddMarker(markerOptions);
+            return m_MarkerOptions;
+        }
 
-            CameraPosition.Builder builder = CameraPosition.InvokeBuilder();
-            builder.Target(new LatLng(lat, lng));
-            CameraPosition cameraPos = builder.Build();
-            CameraUpdate cameraUpdate = CameraUpdateFactory.NewCameraPosition(cameraPos);
-            m_Map.MoveCamera(cameraUpdate);
+        public void OnLocationChanged(Location location)
+        {           
+            m_MarkerOptions = UpdateMarker(location.Latitude, location.Longitude);
+
+            //Moves the camera to the location but zoom is still fucked
+            float zuum = m_Map.MinZoomLevel + 1.0f;
+            CameraUpdate cameraUpdate = CameraUpdateFactory.NewLatLngZoom(new LatLng(location.Latitude, location.Longitude), zuum);
+            m_Map.AnimateCamera(cameraUpdate);
         }
 
         protected override void OnResume()
         {
             base.OnResume();
-            locationManager.RequestLocationUpdates(provider, 400, 1, this);
+            string gpsProvider = LocationManager.GpsProvider;
+            string netProvider = LocationManager.NetworkProvider;
+
+            if (locationManager.IsProviderEnabled(gpsProvider))
+                locationManager.RequestLocationUpdates(gpsProvider, 2000, 1, this);
+            //DANGEROUSSS
+            if (locationManager.IsProviderEnabled(netProvider))
+                locationManager.RequestLocationUpdates(netProvider, 2000, 1, this);
         }
 
         protected override void OnPause()
