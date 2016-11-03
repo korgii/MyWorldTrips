@@ -8,15 +8,16 @@ using Android.Locations;
 using Android.Runtime;
 using Android.Content;
 using Android.Util;
+using Android.Support.V4.Content;
+using Android;
 
 namespace MyWorldTrips
 {
     [Activity(Label = "MyWorldTrips", MainLauncher = true, Icon = "@drawable/icon")]
-    public class MainActivity : Activity, IOnMapReadyCallback, ILocationListener
+    public class MainActivity : Activity, IOnMapReadyCallback, ILocationListener, GoogleMap.IOnMyLocationButtonClickListener
     {
         private GoogleMap m_Map;
         private LocationManager locationManager;
-        private Spinner spinner;
         private string provider;
 
         //Users global location variable
@@ -24,16 +25,15 @@ namespace MyWorldTrips
 
         protected override void OnCreate(Bundle bundle)
         {
+            //m_Map.onMy
             base.OnCreate(bundle);
             SetContentView (Resource.Layout.Main);
 
-            spinner = FindViewById<Spinner>(Resource.Id.spinner);
-
             //Maybe move these somwhere else if they dont belong to map setup
-            spinner.ItemSelected += Spinner_ItemSelected;
             locationManager = GetSystemService(Context.LocationService) as LocationManager;
             provider = locationManager.GetBestProvider(new Criteria(), false);
 
+            //This is important
             SetUpMap();
         }
 
@@ -71,20 +71,21 @@ namespace MyWorldTrips
         public void OnMapReady(GoogleMap googleMap)
         {
             m_Map = googleMap;
+            m_Map.SetOnMyLocationButtonClickListener(this);
+            enableMyLocation();
+
 
             Location location = locationManager.GetLastKnownLocation(provider);
             if (location == null)
-                System.Diagnostics.Debug.WriteLine("No location");
-            else
-            {
+                Toast.MakeText(this, "No location found with your device", ToastLength.Short);
+            else {
                 m_MarkerOptions = UpdateMarker(location.Latitude, location.Longitude);
                 m_Map.AddMarker(m_MarkerOptions);
             }
 
             m_Map.UiSettings.ZoomControlsEnabled = true;
             m_Map.UiSettings.CompassEnabled = true;
-            m_Map.UiSettings.MyLocationButtonEnabled = true;
-            m_Map.UiSettings.MapToolbarEnabled = true;
+
             m_Map.MoveCamera(CameraUpdateFactory.ZoomIn());
         }
 
@@ -99,14 +100,25 @@ namespace MyWorldTrips
             return m_MarkerOptions;
         }
 
+        private void enableMyLocation()
+        {
+            //check for access. this sucks
+            //if (ContextCompat.CheckSelfPermission(this, Manifest.Permission.AccessFineLocation))
+            if (m_Map != null)          
+                m_Map.MyLocationEnabled = true;
+        }
+
         public void OnLocationChanged(Location location)
         {           
             m_MarkerOptions = UpdateMarker(location.Latitude, location.Longitude);
+            Toast.MakeText(this, string.Format("Longitude:{0}, Altitude{1}", location.Longitude, location.Altitude), ToastLength.Short);
 
+
+            //Moves camera but mylocation button does that now
             //Moves the camera to the location but zoom is still fucked
-            float zuum = m_Map.MinZoomLevel + 1.0f;
-            CameraUpdate cameraUpdate = CameraUpdateFactory.NewLatLngZoom(new LatLng(location.Latitude, location.Longitude), zuum);
-            m_Map.AnimateCamera(cameraUpdate);
+            //float zuum = m_Map.MinZoomLevel + 1.0f;
+            //CameraUpdate cameraUpdate = CameraUpdateFactory.NewLatLngZoom(new LatLng(location.Latitude, location.Longitude), zuum);
+            //m_Map.AnimateCamera(cameraUpdate);
         }
 
         protected override void OnResume()
@@ -141,6 +153,12 @@ namespace MyWorldTrips
         public void OnStatusChanged(string provider, [GeneratedEnum] Availability status, Bundle extras)
         {
             //throw new NotImplementedException();
+        }
+
+        public bool OnMyLocationButtonClick()
+        {
+            Toast.MakeText(this, "Your current location", ToastLength.Short).Show();
+            return false;
         }
     }
 }

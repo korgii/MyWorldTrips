@@ -364,9 +364,6 @@ namespace MyWorldTrips
 			// aapt resource value: 0x7f070003
 			public const int satellite = 2131165187;
 			
-			// aapt resource value: 0x7f07000e
-			public const int spinner = 2131165198;
-			
 			// aapt resource value: 0x7f070008
 			public const int standard = 2131165192;
 			

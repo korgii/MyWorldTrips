@@ -39,5 +39,5 @@ C:\Users\Jani\Documents\Visual Studio 2015\Projects\MyWorldTrips\MyWorldTrips\ob
 C:\Users\Jani\Documents\Visual Studio 2015\Projects\MyWorldTrips\MyWorldTrips\obj\Debug\android\assets\System.ServiceModel.Internals.dll.mdb
 C:\Users\Jani\Documents\Visual Studio 2015\Projects\MyWorldTrips\MyWorldTrips\obj\Debug\android\assets\System.Xml.dll.mdb
 C:\Users\Jani\Documents\Visual Studio 2015\Projects\MyWorldTrips\MyWorldTrips\obj\Debug\android\assets\System.Xml.Linq.dll.mdb
-C:\Users\Jani\Documents\Visual Studio 2015\Projects\MyWorldTrips\MyWorldTrips\obj\Debug\MyWorldTrips.dll.mdb
-C:\Users\Jani\Documents\Visual Studio 2015\Projects\MyWorldTrips\MyWorldTrips\bin\Debug\MyWorldTrips.dll.mdb
+C:\Users\Jani\documents\visual studio 2015\Projects\MyWorldTrips\MyWorldTrips\obj\Debug\MyWorldTrips.dll.mdb
+C:\Users\Jani\documents\visual studio 2015\Projects\MyWorldTrips\MyWorldTrips\bin\Debug\MyWorldTrips.dll.mdb

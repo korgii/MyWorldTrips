@@ -307,7 +307,6 @@ containing a value of this type.
         public static final int none=0x7f070001;
         public static final int normal=0x7f070002;
         public static final int satellite=0x7f070003;
-        public static final int spinner=0x7f07000e;
         public static final int standard=0x7f070008;
         public static final int terrain=0x7f070004;
         public static final int wide=0x7f070009;
