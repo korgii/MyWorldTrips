@@ -13,7 +13,7 @@ using Android;
 
 namespace MyWorldTrips
 {
-    [Activity(Label = "MyWorldTrips", MainLauncher = true, Icon = "@drawable/icon")]
+    [Activity(Label = "MyWorldTrips", MainLauncher = false, Icon = "@drawable/icon")]
     public class MainActivity : Activity, IOnMapReadyCallback, ILocationListener, GoogleMap.IOnMyLocationButtonClickListener
     {
         private GoogleMap m_Map;
@@ -25,7 +25,6 @@ namespace MyWorldTrips
 
         protected override void OnCreate(Bundle bundle)
         {
-            //m_Map.onMy
             base.OnCreate(bundle);
             SetContentView (Resource.Layout.Main);
 
@@ -43,37 +42,12 @@ namespace MyWorldTrips
                 FragmentManager.FindFragmentById<MapFragment>(Resource.Id.map).GetMapAsync(this);
         }
 
-        private void Spinner_ItemSelected(object sender, AdapterView.ItemSelectedEventArgs e)
-        {
-            switch(e.Position)
-            {
-                case 0:
-                    m_Map.MapType = GoogleMap.MapTypeHybrid;
-                    break;
-                case 1:
-                    m_Map.MapType = GoogleMap.MapTypeNone;
-                    break;
-                case 2:
-                    m_Map.MapType = GoogleMap.MapTypeNormal;
-                    break;
-                case 3:
-                    m_Map.MapType = GoogleMap.MapTypeSatellite;
-                    break;
-                case 4:
-                    m_Map.MapType = GoogleMap.MapTypeTerrain;
-                    break;
-                default:
-                    m_Map.MapType = GoogleMap.MapTypeNone;
-                    break;
-            }
-        }
-
+        //Called when GoogleMap object is ready
         public void OnMapReady(GoogleMap googleMap)
         {
-            m_Map = googleMap;
+            m_Map = googleMap; //make it global on this instance
             m_Map.SetOnMyLocationButtonClickListener(this);
             enableMyLocation();
-
 
             Location location = locationManager.GetLastKnownLocation(provider);
             if (location == null)
@@ -84,9 +58,7 @@ namespace MyWorldTrips
             }
 
             m_Map.UiSettings.ZoomControlsEnabled = true;
-            m_Map.UiSettings.CompassEnabled = true;
-
-            m_Map.MoveCamera(CameraUpdateFactory.ZoomIn());
+            m_Map.AnimateCamera(CameraUpdateFactory.NewLatLngZoom(new LatLng(location.Latitude, location.Longitude), 15f));
         }
 
         //Default user position. to be continued
@@ -94,7 +66,7 @@ namespace MyWorldTrips
         {
             m_MarkerOptions = new MarkerOptions();
             m_MarkerOptions.SetPosition(new LatLng(lati, longi));
-            m_MarkerOptions.SetTitle("My Position");
+            m_MarkerOptions.SetTitle(string.Format("Latitude:{0}, Longitude:{1}", lati, longi));
             m_MarkerOptions.SetIcon(BitmapDescriptorFactory.DefaultMarker(BitmapDescriptorFactory.HueCyan));
 
             return m_MarkerOptions;
@@ -110,15 +82,9 @@ namespace MyWorldTrips
 
         public void OnLocationChanged(Location location)
         {           
+            //Do what the fuck ever when location is changed. here's a marker that's supposed to move
             m_MarkerOptions = UpdateMarker(location.Latitude, location.Longitude);
             Toast.MakeText(this, string.Format("Longitude:{0}, Altitude{1}", location.Longitude, location.Altitude), ToastLength.Short);
-
-
-            //Moves camera but mylocation button does that now
-            //Moves the camera to the location but zoom is still fucked
-            //float zuum = m_Map.MinZoomLevel + 1.0f;
-            //CameraUpdate cameraUpdate = CameraUpdateFactory.NewLatLngZoom(new LatLng(location.Latitude, location.Longitude), zuum);
-            //m_Map.AnimateCamera(cameraUpdate);
         }
 
         protected override void OnResume()
@@ -142,17 +108,17 @@ namespace MyWorldTrips
 
         public void OnProviderDisabled(string provider)
         {
-            //throw new NotImplementedException();
+            Toast.MakeText(this, string.Format("Provider:{0} disabled", provider), ToastLength.Short);
         }
 
         public void OnProviderEnabled(string provider)
         {
-            //throw new NotImplementedException();
+            Toast.MakeText(this, string.Format("Provider:{0} enabled", provider), ToastLength.Short);
         }
 
         public void OnStatusChanged(string provider, [GeneratedEnum] Availability status, Bundle extras)
         {
-            //throw new NotImplementedException();
+            Toast.MakeText(this, string.Format("Status changed on provider:{0}", provider), ToastLength.Long);
         }
 
         public bool OnMyLocationButtonClick()
