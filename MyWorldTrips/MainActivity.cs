@@ -7,10 +7,8 @@ using Android.Gms.Maps.Model;
 using Android.Locations;
 using Android.Runtime;
 using Android.Content;
-using Android.Util;
-using Android.Support.V4.Content;
-using Android;
 using System.Collections.Generic;
+using Java.Text;
 
 namespace MyWorldTrips
 {
@@ -60,7 +58,7 @@ namespace MyWorldTrips
 
             Location location = locationManager.GetLastKnownLocation(provider);
             if (location == null)
-                Toast.MakeText(this, "No location found with your device", ToastLength.Short);
+                Toast.MakeText(this, "No location found with your device", ToastLength.Short).Show();
 
             m_Map.UiSettings.MapToolbarEnabled = false;
             m_Map.UiSettings.ZoomControlsEnabled = true;
@@ -89,7 +87,7 @@ namespace MyWorldTrips
 
         public void OnLocationChanged(Location location)
         {           
-            Toast.MakeText(this, string.Format("Longitude:{0}, Altitude{1}", location.Longitude, location.Altitude), ToastLength.Short);
+            Toast.MakeText(this, string.Format("Longitude:{0}, Altitude{1}", location.Longitude, location.Altitude), ToastLength.Short).Show();
         }
 
         protected override void OnResume()
@@ -113,17 +111,17 @@ namespace MyWorldTrips
 
         public void OnProviderDisabled(string provider)
         {
-            Toast.MakeText(this, string.Format("Provider:{0} disabled", provider), ToastLength.Short);
+            Toast.MakeText(this, string.Format("Provider:{0} disabled", provider), ToastLength.Short).Show(); ;
         }
 
         public void OnProviderEnabled(string provider)
         {
-            Toast.MakeText(this, string.Format("Provider:{0} enabled", provider), ToastLength.Short);
+            Toast.MakeText(this, string.Format("Provider:{0} enabled", provider), ToastLength.Short).Show(); 
         }
 
         public void OnStatusChanged(string provider, [GeneratedEnum] Availability status, Bundle extras)
         {
-            Toast.MakeText(this, string.Format("Status changed on provider:{0}", provider), ToastLength.Long);
+            Toast.MakeText(this, string.Format("Status changed on provider:{0}", provider), ToastLength.Long).Show();
         }
 
         public bool OnMyLocationButtonClick()
@@ -134,17 +132,24 @@ namespace MyWorldTrips
 
         public void OnMapLongClick(LatLng point)
         {
-            var markerOptions = UpdateMarker(point.Latitude, point.Longitude);
-            var marker = m_Map.AddMarker(markerOptions);
+            var markerDialog = new AlertDialog.Builder(this);
+            markerDialog.SetMessage(string.Format("Set marker on {0} {1} with timestamp?", point.Latitude, point.Longitude));
 
-            m_CustomMarkerList.Add(new CustomMarkerOptions(markerOptions, marker));
+            markerDialog.SetNeutralButton("Yes", delegate
+            {
+                var markerOptions = UpdateMarker(point.Latitude, point.Longitude);
+                var marker = m_Map.AddMarker(markerOptions);
+                m_CustomMarkerList.Add(new CustomMarkerOptions(markerOptions, marker));
+            });
+            markerDialog.SetNegativeButton("Cancel", delegate { });
+            markerDialog.Show();
+
         }
 
         public bool OnMarkerClick(Marker marker)
         {
             var foundMarker = m_CustomMarkerList.Find(p => p.Marker.Id == marker.Id);
-            var time = foundMarker.MarkerTime.ToShortDateString();
-            Toast.MakeText(this, string.Format("Time:{0}", time), ToastLength.Long);
+            Toast.MakeText(this, string.Format("Added: {0}", foundMarker.GetTimeString()), ToastLength.Long).Show();
             return false;
         }
     }

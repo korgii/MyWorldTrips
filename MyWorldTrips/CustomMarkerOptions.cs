@@ -1,32 +1,32 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 using Android.Gms.Maps.Model;
+using Java.Text;
+using Java.Util;
 
 namespace MyWorldTrips
 {
     public class CustomMarkerOptions
     {
-        public DateTime MarkerTime { get; set; }
+        public Calendar MarkerCalendar { get; set; }
         public MarkerOptions MarkerOptions { get; set; }
         public Marker Marker { get; set; }
-
-        public DateTime m_MarkerTime;
 
         public CustomMarkerOptions(MarkerOptions markerOptions, Marker marker)
         {
             Marker = marker;
             MarkerOptions = markerOptions;
-            MarkerTime = DateTime.Today;
+            MarkerCalendar = Calendar.GetInstance(TimeZone.Default);
         }
 
+        /// <summary>
+        /// Returns the time using Calendar class
+        /// </summary>
+        /// <returns></returns>
+        public string GetTimeString ()
+        {
+            //Could implement different time types, lengths, formats
+            SimpleDateFormat asd = new SimpleDateFormat("dd.MM.yyy HH:mm:ss z");
+            string asGmt = asd.Format(MarkerCalendar.Time);
+            return asGmt;
+        }
     }
 }
