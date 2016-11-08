@@ -10,18 +10,24 @@ using Android.Content;
 using Android.Util;
 using Android.Support.V4.Content;
 using Android;
+using System.Collections.Generic;
 
 namespace MyWorldTrips
 {
     [Activity(Label = "MyWorldTrips", MainLauncher = false, Icon = "@drawable/icon")]
-    public class MainActivity : Activity, IOnMapReadyCallback, ILocationListener, GoogleMap.IOnMyLocationButtonClickListener
+    public class MainActivity : Activity, IOnMapReadyCallback, 
+        ILocationListener, 
+        GoogleMap.IOnMyLocationButtonClickListener, 
+        GoogleMap.IOnMapLongClickListener, 
+        GoogleMap.IOnMarkerClickListener
     {
         private GoogleMap m_Map;
         private LocationManager locationManager;
         private string provider;
 
-        //Users global location variable
-        private MarkerOptions m_MarkerOptions;
+        public List<CustomMarkerOptions> MarkerOptionsList { get; set; }
+
+        public List<CustomMarkerOptions> m_CustomMarkerList = new List<CustomMarkerOptions >();
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -47,29 +53,30 @@ namespace MyWorldTrips
         {
             m_Map = googleMap; //make it global on this instance
             m_Map.SetOnMyLocationButtonClickListener(this);
+            m_Map.SetOnMapLongClickListener(this);
+            m_Map.SetOnMarkerClickListener(this);
+
             enableMyLocation();
 
             Location location = locationManager.GetLastKnownLocation(provider);
             if (location == null)
                 Toast.MakeText(this, "No location found with your device", ToastLength.Short);
-            else {
-                m_MarkerOptions = UpdateMarker(location.Latitude, location.Longitude);
-                m_Map.AddMarker(m_MarkerOptions);
-            }
 
+            m_Map.UiSettings.MapToolbarEnabled = false;
             m_Map.UiSettings.ZoomControlsEnabled = true;
+
             m_Map.AnimateCamera(CameraUpdateFactory.NewLatLngZoom(new LatLng(location.Latitude, location.Longitude), 15f));
         }
 
         //Default user position. to be continued
         public MarkerOptions UpdateMarker (double lati, double longi)
         {
-            m_MarkerOptions = new MarkerOptions();
-            m_MarkerOptions.SetPosition(new LatLng(lati, longi));
-            m_MarkerOptions.SetTitle(string.Format("Latitude:{0}, Longitude:{1}", lati, longi));
-            m_MarkerOptions.SetIcon(BitmapDescriptorFactory.DefaultMarker(BitmapDescriptorFactory.HueCyan));
+            var marker = new MarkerOptions();
+            marker.SetPosition(new LatLng(lati, longi));
+            marker.SetTitle(string.Format("Latitude:{0}, Longitude:{1}, Time:{2}", lati, longi, DateTime.Today.ToShortDateString()));
+            marker.SetIcon(BitmapDescriptorFactory.DefaultMarker(BitmapDescriptorFactory.HueCyan));
 
-            return m_MarkerOptions;
+            return marker;
         }
 
         private void enableMyLocation()
@@ -82,8 +89,6 @@ namespace MyWorldTrips
 
         public void OnLocationChanged(Location location)
         {           
-            //Do what the fuck ever when location is changed. here's a marker that's supposed to move
-            m_MarkerOptions = UpdateMarker(location.Latitude, location.Longitude);
             Toast.MakeText(this, string.Format("Longitude:{0}, Altitude{1}", location.Longitude, location.Altitude), ToastLength.Short);
         }
 
@@ -124,6 +129,22 @@ namespace MyWorldTrips
         public bool OnMyLocationButtonClick()
         {
             Toast.MakeText(this, "Your current location", ToastLength.Short).Show();
+            return false;
+        }
+
+        public void OnMapLongClick(LatLng point)
+        {
+            var markerOptions = UpdateMarker(point.Latitude, point.Longitude);
+            var marker = m_Map.AddMarker(markerOptions);
+
+            m_CustomMarkerList.Add(new CustomMarkerOptions(markerOptions, marker));
+        }
+
+        public bool OnMarkerClick(Marker marker)
+        {
+            var foundMarker = m_CustomMarkerList.Find(p => p.Marker.Id == marker.Id);
+            var time = foundMarker.MarkerTime.ToShortDateString();
+            Toast.MakeText(this, string.Format("Time:{0}", time), ToastLength.Long);
             return false;
         }
     }
