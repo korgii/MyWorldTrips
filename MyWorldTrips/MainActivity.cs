@@ -8,24 +8,26 @@ using Android.Locations;
 using Android.Runtime;
 using Android.Content;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using Java.Util;
 using Java.Text;
 
 namespace MyWorldTrips
 {
-    [Activity(Label = "MyWorldTrips", MainLauncher = false, Icon = "@drawable/icon")]
+    //Forced this activity to take mytheme.splash which splashactivity actually uses so it wont force actionbar on mainactivity somehow
+    [Activity(Theme = "@style/MyTheme.Splash", Label = "MyWorldTrips", MainLauncher = false, Icon = "@drawable/icon")]
     public class MainActivity : Activity, IOnMapReadyCallback, 
-        ILocationListener, 
-        GoogleMap.IOnMyLocationButtonClickListener, 
-        GoogleMap.IOnMapLongClickListener, 
-        GoogleMap.IOnMarkerClickListener
+                                            ILocationListener, 
+                                            GoogleMap.IOnMyLocationButtonClickListener, 
+                                            GoogleMap.IOnMapLongClickListener, 
+                                            GoogleMap.IOnMarkerClickListener
     {
-        private GoogleMap m_Map;
+        public static GoogleMap m_Map;
         private LocationManager locationManager;
+        private PolylineOptions m_PolyLine;
         private string provider;
 
-        public List<CustomMarkerOptions> MarkerOptionsList { get; set; }
-
-        public List<CustomMarkerOptions> m_CustomMarkerList = new List<CustomMarkerOptions >();
+        public static List<CustomMarkerOptions> m_CustomMarkerList = new List<CustomMarkerOptions>();
 
         protected override void OnCreate(Bundle bundle)
         {
@@ -38,6 +40,9 @@ namespace MyWorldTrips
 
             //This is important
             SetUpMap();
+
+            m_PolyLine = new PolylineOptions();
+            m_PolyLine.Visible(true);          
         }
 
         public void SetUpMap()
@@ -87,7 +92,9 @@ namespace MyWorldTrips
 
         public void OnLocationChanged(Location location)
         {           
-            Toast.MakeText(this, string.Format("Longitude:{0}, Altitude{1}", location.Longitude, location.Altitude), ToastLength.Short).Show();
+            Toast.MakeText(this, string.Format("Longitude:{0}, Altitude:{1}", location.Longitude, location.Latitude), ToastLength.Short).Show();
+            m_PolyLine.Add(new LatLng(location.Latitude, location.Longitude));
+            m_Map.AddPolyline(m_PolyLine);
         }
 
         protected override void OnResume()
@@ -132,25 +139,40 @@ namespace MyWorldTrips
 
         public void OnMapLongClick(LatLng point)
         {
-            var markerDialog = new AlertDialog.Builder(this);
-            markerDialog.SetMessage(string.Format("Set marker on {0} {1} with timestamp?", point.Latitude, point.Longitude));
 
-            markerDialog.SetNeutralButton("Yes", delegate
-            {
-                var markerOptions = UpdateMarker(point.Latitude, point.Longitude);
-                var marker = m_Map.AddMarker(markerOptions);
-                m_CustomMarkerList.Add(new CustomMarkerOptions(markerOptions, marker));
-            });
-            markerDialog.SetNegativeButton("Cancel", delegate { });
-            markerDialog.Show();
+            var markerOptions = UpdateMarker(point.Latitude, point.Longitude);
+            //CustomMarkerOptions custom = new CustomMarkerOptions(markerOptions);
 
+            var activityIntent = new Intent(this, typeof(AddMarkerActivity));
+            activityIntent.SetFlags(ActivityFlags.ReorderToFront);
+
+            //TODO: Pass data to CustomMarkerOptions
+            activityIntent.PutExtra("Longitude", markerOptions.Position.Longitude);
+            activityIntent.PutExtra("Latitude", markerOptions.Position.Latitude);
+            activityIntent.PutExtra("Time", GetTimeString(Calendar.GetInstance(Java.Util.TimeZone.Default)));
+            StartActivity(activityIntent);
+
+            //TODO: Create custommarkeroptions here and save it to the list
+            var marker = m_Map.AddMarker(markerOptions);
+            m_CustomMarkerList.Add(new CustomMarkerOptions(markerOptions, marker));
+            
         }
 
         public bool OnMarkerClick(Marker marker)
         {
             var foundMarker = m_CustomMarkerList.Find(p => p.Marker.Id == marker.Id);
-            Toast.MakeText(this, string.Format("Added: {0}", foundMarker.GetTimeString()), ToastLength.Long).Show();
+            //Tehaan sitte saatana pitemman kaavan kautta.
+
+            Toast.MakeText(this, string.Format("Added: {0}", foundMarker.MarkerDate), ToastLength.Long).Show();
             return false;
+        }
+
+        public string GetTimeString(Calendar c)
+        {
+            //Could implement different time types, lengths, formats
+            SimpleDateFormat asd = new SimpleDateFormat("dd.MM.yyy HH:mm:ss z");
+            string asGmt = asd.Format(c.Time);
+            return asGmt;
         }
     }
 }

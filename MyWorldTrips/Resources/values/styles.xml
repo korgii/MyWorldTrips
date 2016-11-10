@@ -5,8 +5,13 @@
   <style name="MyTheme" parent="MyTheme.Base">
   </style>
 
-  <style name="MyTheme.Splash" parent ="Theme.AppCompat.Light">
+  <style name="MyTheme.Splash" parent = "Theme.AppCompat.Light">
     <item name="android:windowBackground">@drawable/splash_screen</item>
-    <item name="android:windowNoTitle">true</item>
+    <item name="windowNoTitle">true</item>
+    
+    <!--Work you son of a bitch-->
+    <item name="windowActionBar">false</item>
+    <item name="android:windowFullscreen">true</item>
+    <item name="android:windowContentOverlay">@null</item>
   </style>
 </resources>
